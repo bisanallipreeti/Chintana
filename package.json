@@ -1,0 +1,19 @@
+{
+  "name": "chintana-preeti",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local runner for the Chintana backend and frontends.",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:expo": "node scripts/expo-web.mjs",
+    "dev:vite": "npm --prefix frontend run dev",
+    "install:all": "npm --prefix backend ci && npm --prefix frontend ci && npm --prefix frontend-expo ci",
+    "test": "npm --prefix backend test",
+    "typecheck": "npm --prefix frontend-expo run typecheck",
+    "build": "npm run build:expo && npm run build:vite",
+    "build:expo": "npm --prefix frontend-expo run build:web",
+    "build:vite": "npm --prefix frontend run build"
+  }
+}

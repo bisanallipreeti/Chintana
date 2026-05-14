@@ -1,0 +1,41 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      API_PREFIX: /api/v1
+      MONGODB_URI: mongodb://mongo:27017/chintana
+      ACCESS_TOKEN_SECRET: change-me-access-secret
+      REFRESH_TOKEN_SECRET: change-me-refresh-secret
+      CORS_ORIGINS: http://localhost:8081
+      CLIENT_APP_URL: http://localhost:8081
+      FORCE_HTTPS: "false"
+
+  frontend-web:
+    build:
+      context: ./frontend-expo
+      args:
+        EXPO_PUBLIC_API_BASE_URL: http://localhost:5000/api/v1
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8081:80"
+
+volumes:
+  mongo_data:

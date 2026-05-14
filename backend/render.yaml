@@ -1,0 +1,100 @@
+services:
+  - type: web
+    name: chintana-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: APP_NAME
+        value: chintana-backend
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "5000"
+      - key: API_PREFIX
+        value: /api/v1
+      - key: TRUST_PROXY
+        value: "true"
+      - key: FORCE_HTTPS
+        value: "true"
+      - key: MONGODB_URI
+        sync: false
+      - key: ACCESS_TOKEN_SECRET
+        generateValue: true
+      - key: ACCESS_TOKEN_TTL
+        value: 15m
+      - key: REFRESH_TOKEN_SECRET
+        generateValue: true
+      - key: REFRESH_TOKEN_TTL_DAYS
+        value: "30"
+      - key: OTP_TTL_MINUTES
+        value: "10"
+      - key: PASSWORD_RESET_TTL_MINUTES
+        value: "20"
+      - key: BCRYPT_SALT_ROUNDS
+        value: "12"
+      - key: CORS_ORIGINS
+        sync: false
+      - key: CLIENT_APP_URL
+        sync: false
+      - key: MOBILE_SCHEME
+        value: chintana
+      - key: INTERNAL_CRON_KEY
+        generateValue: true
+      - key: GROQ_API_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: GROQ_FALLBACK_MODELS
+        value: llama-3.1-8b-instant
+      - key: GROQ_MAX_TOKENS
+        value: "420"
+      - key: GROQ_TEMPERATURE
+        value: "0.2"
+      - key: GROQ_TLS_REJECT_UNAUTHORIZED
+        value: "true"
+      - key: AI_TIMEOUT_MS
+        value: "22000"
+      - key: AI_MAX_RETRIES
+        value: "0"
+      - key: AI_RETRY_BASE_DELAY_MS
+        value: "600"
+      - key: AI_CACHE_TTL_SECONDS
+        value: "900"
+      - key: AI_CACHE_MAX_ENTRIES
+        value: "5000"
+      - key: AI_DAILY_LIMIT_PER_USER
+        value: "120"
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: ENABLE_BULLMQ
+        value: "false"
+      - key: REDIS_URL
+        sync: false
+      - key: DAILY_REMINDER_SWEEP_INTERVAL_MINUTES
+        value: "60"
+      - key: SENTRY_DSN
+        sync: false
+      - key: SENTRY_TRACES_SAMPLE_RATE
+        value: "0"
+      - key: LOG_LEVEL
+        value: info
+      - key: API_DOCS_ENABLED
+        value: "false"
