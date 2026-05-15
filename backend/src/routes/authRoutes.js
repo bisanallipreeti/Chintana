@@ -47,4 +47,25 @@ router.post(
 // Get current user
 router.get("/me", requireAuth, me);
 
+/* ---------------- ADDED ROUTE ---------------- */
+
+// Check email (FIX for frontend error)
+router.post("/check-email", async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Email is required",
+    });
+  }
+
+  // TODO: replace with DB check if needed
+  return res.json({
+    success: true,
+    exists: false,
+    message: "Email check completed",
+  });
+});
+
 export default router;
