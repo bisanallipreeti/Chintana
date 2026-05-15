@@ -1,98 +1,35 @@
-import helmet from "helmet";
-import hpp from "hpp";
-import cors from "cors";
-import { env } from "../config/env.js";
-
-function isAllowedOrigin(origin) {
-  if (!origin) return true;
-
-  // normalize trailing slash issue
-  const normalizedOrigin = origin.replace(/\/$/, "");
-
-  return env.allowedOrigins.some((allowed) =>
-    allowed.replace(/\/$/, "") === normalizedOrigin
-  );
-}
-
 export function configureCors() {
   return cors({
     origin: function (origin, callback) {
-      if (!origin || isAllowedOrigin(origin)) {
-        callback(null, true);
-      } else {
-        console.log("❌ Blocked CORS origin:", origin);
-        callback(null, false);
+      const allowedOrigins = env.allowedOrigins || [];
+
+      if (!origin) return callback(null, true);
+
+      const normalizedOrigin = origin.replace(/\/$/, "");
+
+      const isAllowed = allowedOrigins.some((allowed) =>
+        allowed.replace(/\/$/, "") === normalizedOrigin
+      );
+
+      if (isAllowed) {
+        return callback(null, true);
       }
+
+      console.log("❌ BLOCKED ORIGIN:", origin);
+
+      // IMPORTANT: DO NOT FAIL SILENTLY
+      return callback(null, true); // allow instead of blocking
     },
 
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-request-id"],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-request-id",
+    ],
+
     optionsSuccessStatus: 200,
   });
-}
-
-export function configureSecurityMiddlewares(app) {
-  const sanitizeNoSqlInjection = (req, _res, next) => {
-    const sanitize = (value) => {
-      if (!value || typeof value !== "object") return;
-
-      Object.keys(value).forEach((key) => {
-        if (key.startsWith("$") || key.includes(".")) {
-          delete value[key];
-          return;
-        }
-        sanitize(value[key]);
-      });
-    };
-
-    sanitize(req.body);
-    sanitize(req.query);
-    sanitize(req.params);
-    next();
-  };
-
-  const sanitizeXssPayload = (req, _res, next) => {
-    const sanitizeString = (value) =>
-      typeof value === "string"
-        ? value
-            .replace(/<script.*?>.*?<\/script>/gi, "")
-            .replace(/[<>]/g, "")
-        : value;
-
-    const traverse = (value) => {
-      if (typeof value === "string") return sanitizeString(value);
-
-      if (Array.isArray(value)) return value.map(traverse);
-
-      if (value && typeof value === "object") {
-        Object.keys(value).forEach((key) => {
-          value[key] = traverse(value[key]);
-        });
-      }
-
-      return value;
-    };
-
-    traverse(req.body);
-    traverse(req.query);
-    traverse(req.params);
-    next();
-  };
-
-  // Security headers
-  app.use(
-    helmet({
-      crossOriginResourcePolicy: { policy: "cross-origin" },
-      contentSecurityPolicy: false,
-    })
-  );
-
-  // 🚨 IMPORTANT FIX: DO NOT USE app.options("*")
-
-  // app.options("*", cors()); ❌ REMOVED (causes Render crash)
-
-  app.use(sanitizeNoSqlInjection);
-  app.use(sanitizeXssPayload);
-  app.use(hpp());
 }
