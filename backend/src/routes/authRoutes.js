@@ -15,12 +15,12 @@ import {
 } from "../middleware/validation.js";
 
 import { authLimiter } from "../middleware/rateLimiter.js";
+import { User } from "../models/User.js";
 
 const router = Router();
 
 /* ---------------- AUTH ROUTES ---------------- */
 
-// Register
 router.post(
   "/register",
   authLimiter,
@@ -28,7 +28,6 @@ router.post(
   register
 );
 
-// Login
 router.post(
   "/login",
   authLimiter,
@@ -36,7 +35,6 @@ router.post(
   login
 );
 
-// Forgot password
 router.post(
   "/forgot-password",
   authLimiter,
@@ -44,28 +42,32 @@ router.post(
   forgotPassword
 );
 
-// Get current user
 router.get("/me", requireAuth, me);
 
-/* ---------------- ADDED ROUTE ---------------- */
+/* ---------------- FIXED CHECK EMAIL ---------------- */
 
-// Check email (FIX for frontend error)
-router.post("/check-email", async (req, res) => {
-  const { email } = req.body;
+router.post("/check-email", async (req, res, next) => {
+  try {
+    const email = req.body?.email;
 
-  if (!email) {
-    return res.status(400).json({
-      success: false,
-      message: "Email is required",
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const existingUser = await User.findOne({
+      email: email.toLowerCase().trim(),
     });
-  }
 
-  // TODO: replace with DB check if needed
-  return res.json({
-    success: true,
-    exists: false,
-    message: "Email check completed",
-  });
+    return res.json({
+      success: true,
+      exists: !!existingUser,
+    });
+  } catch (error) {
+    next(error); // IMPORTANT: prevents 500 crash without logs
+  }
 });
 
 export default router;
