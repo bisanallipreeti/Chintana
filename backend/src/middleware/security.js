@@ -26,15 +26,8 @@ export function configureCors() {
     },
 
     credentials: true,
-
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "x-request-id",
-    ],
-
+    allowedHeaders: ["Content-Type", "Authorization", "x-request-id"],
     optionsSuccessStatus: 200,
   });
 }
@@ -87,6 +80,7 @@ export function configureSecurityMiddlewares(app) {
     next();
   };
 
+  // Security headers
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -94,8 +88,9 @@ export function configureSecurityMiddlewares(app) {
     })
   );
 
-  // IMPORTANT: preflight fix
-  app.options("*", cors());
+  // 🚨 IMPORTANT FIX: DO NOT USE app.options("*")
+
+  // app.options("*", cors()); ❌ REMOVED (causes Render crash)
 
   app.use(sanitizeNoSqlInjection);
   app.use(sanitizeXssPayload);
