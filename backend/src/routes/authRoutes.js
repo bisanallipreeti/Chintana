@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import {
   forgotPassword,
   login,
@@ -7,6 +8,7 @@ import {
 } from "../controllers/authController.js";
 
 import { requireAuth } from "../middleware/auth.js";
+
 import {
   validate,
   registerSchema,
@@ -15,12 +17,14 @@ import {
 } from "../middleware/validation.js";
 
 import { authLimiter } from "../middleware/rateLimiter.js";
+
 import { User } from "../models/User.js";
 
 const router = Router();
 
 /* ---------------- AUTH ROUTES ---------------- */
 
+// REGISTER
 router.post(
   "/register",
   authLimiter,
@@ -28,6 +32,7 @@ router.post(
   register
 );
 
+// LOGIN
 router.post(
   "/login",
   authLimiter,
@@ -35,6 +40,7 @@ router.post(
   login
 );
 
+// FORGOT PASSWORD
 router.post(
   "/forgot-password",
   authLimiter,
@@ -42,13 +48,14 @@ router.post(
   forgotPassword
 );
 
+// CURRENT USER
 router.get("/me", requireAuth, me);
 
-/* ---------------- FIXED CHECK EMAIL ---------------- */
+/* ---------------- CHECK EMAIL (FIXED) ---------------- */
 
 router.post("/check-email", async (req, res, next) => {
   try {
-    const email = req.body?.email;
+    const { email } = req.body;
 
     if (!email) {
       return res.status(400).json({
@@ -57,16 +64,20 @@ router.post("/check-email", async (req, res, next) => {
       });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
     const existingUser = await User.findOne({
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
     });
 
-    return res.json({
+    return res.status(200).json({
       success: true,
-      exists: !!existingUser,
+      exists: Boolean(existingUser),
     });
+
   } catch (error) {
-    next(error); // IMPORTANT: prevents 500 crash without logs
+    console.error("❌ check-email error:", error);
+    next(error);
   }
 });
 
