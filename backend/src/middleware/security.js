@@ -4,46 +4,33 @@ import cors from "cors";
 import { env } from "../config/env.js";
 
 /* -----------------------------
-   CORS ORIGIN CHECK
+   NORMALIZE ORIGIN
 ------------------------------*/
-function isAllowedOrigin(origin) {
-  if (!origin) return true;
-
-  const normalizedOrigin = origin.replace(/\/$/, "");
-
-  const allowedOrigins = env.allowedOrigins || [];
-
-  return allowedOrigins.some((allowed) =>
-    allowed.replace(/\/$/, "") === normalizedOrigin
-  );
+function normalize(origin = "") {
+  return origin.replace(/\/$/, "");
 }
 
 /* -----------------------------
-   CORS CONFIGURATION (FIXED)
+   CORS CONFIGURATION (SAFE)
 ------------------------------*/
 export function configureCors() {
+  const allowedOrigins = (env.allowedOrigins || []).map(normalize);
+
   return cors({
     origin: function (origin, callback) {
-      const allowedOrigins = env.allowedOrigins || [];
-
-      // allow server-to-server or curl requests
+      // allow mobile apps / postman / server-to-server
       if (!origin) return callback(null, true);
 
-      const normalizedOrigin = origin.replace(/\/$/, "");
+      const requestOrigin = normalize(origin);
 
-      const isAllowed = allowedOrigins.some(
-        (allowed) => allowed.replace(/\/$/, "") === normalizedOrigin
-      );
-
-      if (isAllowed) {
+      if (allowedOrigins.includes(requestOrigin)) {
         return callback(null, true);
       }
 
-      console.log("❌ BLOCKED ORIGIN:", origin);
+      console.error("❌ CORS BLOCKED ORIGIN:", origin);
 
-      // IMPORTANT FIX:
-      // DO NOT silently fail (this causes missing CORS headers)
-      return callback(null, true);
+      // IMPORTANT: reject properly
+      return callback(new Error("Not allowed by CORS"));
     },
 
     credentials: true,
@@ -56,7 +43,7 @@ export function configureCors() {
       "x-request-id",
     ],
 
-    optionsSuccessStatus: 200,
+    optionsSuccessStatus: 204,
   });
 }
 
@@ -64,17 +51,18 @@ export function configureCors() {
    SECURITY MIDDLEWARES
 ------------------------------*/
 export function configureSecurityMiddlewares(app) {
+  // Prevent NoSQL injection
   const sanitizeNoSqlInjection = (req, _res, next) => {
-    const sanitize = (value) => {
-      if (!value || typeof value !== "object") return;
+    const sanitize = (obj) => {
+      if (!obj || typeof obj !== "object") return;
 
-      Object.keys(value).forEach((key) => {
+      for (const key of Object.keys(obj)) {
         if (key.startsWith("$") || key.includes(".")) {
-          delete value[key];
-          return;
+          delete obj[key];
+        } else {
+          sanitize(obj[key]);
         }
-        sanitize(value[key]);
-      });
+      }
     };
 
     sanitize(req.body);
@@ -84,45 +72,40 @@ export function configureSecurityMiddlewares(app) {
     next();
   };
 
+  // XSS protection
   const sanitizeXssPayload = (req, _res, next) => {
-    const sanitizeString = (value) =>
-      typeof value === "string"
-        ? value
-            .replace(/<script.*?>.*?<\/script>/gi, "")
-            .replace(/[<>]/g, "")
-        : value;
-
-    const traverse = (value) => {
-      if (typeof value === "string") return sanitizeString(value);
-
-      if (Array.isArray(value)) return value.map(traverse);
-
-      if (value && typeof value === "object") {
-        Object.keys(value).forEach((key) => {
-          value[key] = traverse(value[key]);
-        });
+    const clean = (val) => {
+      if (typeof val === "string") {
+        return val
+          .replace(/<script.*?>.*?<\/script>/gi, "")
+          .replace(/[<>]/g, "");
       }
 
-      return value;
+      if (Array.isArray(val)) return val.map(clean);
+
+      if (val && typeof val === "object") {
+        for (const k in val) {
+          val[k] = clean(val[k]);
+        }
+      }
+
+      return val;
     };
 
-    traverse(req.body);
-    traverse(req.query);
-    traverse(req.params);
+    req.body = clean(req.body);
+    req.query = clean(req.query);
+    req.params = clean(req.params);
 
     next();
   };
 
-  // ---------------- SECURITY HEADERS ----------------
+  // Security headers
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" },
       contentSecurityPolicy: false,
     })
   );
-
-  // ❌ DO NOT use wildcard OPTIONS (breaks Express 5 / Render)
-  // app.options("*", cors());  <-- removed
 
   app.use(sanitizeNoSqlInjection);
   app.use(sanitizeXssPayload);
