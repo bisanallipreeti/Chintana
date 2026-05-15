@@ -6,18 +6,23 @@ mongoose.set("strictQuery", true);
 mongoose.set("bufferCommands", false);
 
 export async function connectDatabase() {
-  if (!env.mongoUri) {
-    logger.warn("MONGODB_URI is not set; database features are disabled until configured.");
-    return;
+  try {
+    if (!env.mongoUri) {
+      logger.error("❌ MONGODB_URI is missing. Server will NOT start.");
+      process.exit(1); // IMPORTANT: stop server
+    }
+
+    await mongoose.connect(env.mongoUri, {
+      maxPoolSize: 20,
+      minPoolSize: 2,
+      serverSelectionTimeoutMS: 10000,
+    });
+
+    logger.info("✅ MongoDB connected successfully");
+  } catch (error) {
+    logger.error("❌ MongoDB connection failed:", error.message);
+    process.exit(1); // IMPORTANT: stop server
   }
-
-  await mongoose.connect(env.mongoUri, {
-    maxPoolSize: 20,
-    minPoolSize: 2,
-    serverSelectionTimeoutMS: 10_000,
-  });
-
-  logger.info("MongoDB connected");
 }
 
 export async function disconnectDatabase() {
