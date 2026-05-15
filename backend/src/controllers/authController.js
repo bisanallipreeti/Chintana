@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { catchAsync } from "../utils/catchAsync.js";
 import { signToken } from "../utils/jwt.js";
 
+/* -------------------- SANITIZE USER -------------------- */
 function sanitizeUser(user) {
   return {
     id: user._id,
@@ -15,6 +16,7 @@ function sanitizeUser(user) {
   };
 }
 
+/* -------------------- REGISTER -------------------- */
 export const register = catchAsync(async (req, res) => {
   const { fullName, email, password, twoFactorAuth = false } = req.body;
 
@@ -22,12 +24,16 @@ export const register = catchAsync(async (req, res) => {
     throw new ApiError(400, "Full name, email, and password are required.");
   }
 
-  const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+  const existingUser = await User.findOne({
+    email: email.toLowerCase().trim(),
+  });
+
   if (existingUser) {
     throw new ApiError(409, "An account with this email already exists.");
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
+
   const user = await User.create({
     fullName: fullName.trim(),
     email: email.toLowerCase().trim(),
@@ -53,23 +59,33 @@ export const register = catchAsync(async (req, res) => {
   });
 });
 
+/* -------------------- LOGIN -------------------- */
 export const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
+
   if (!email || !password) {
     throw new ApiError(400, "Email and password are required.");
   }
 
-  const user = await User.findOne({ email: email.toLowerCase().trim() });
+  const user = await User.findOne({
+    email: email.toLowerCase().trim(),
+  });
+
   if (!user) {
     throw new ApiError(401, "Invalid email or password.");
   }
 
-  const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+  const passwordMatches = await bcrypt.compare(
+    password,
+    user.passwordHash
+  );
+
   if (!passwordMatches) {
     throw new ApiError(401, "Invalid email or password.");
   }
 
   const token = signToken({ userId: user._id.toString() });
+
   res.json({
     success: true,
     message: "Login successful.",
@@ -80,6 +96,7 @@ export const login = catchAsync(async (req, res) => {
   });
 });
 
+/* -------------------- ME -------------------- */
 export const me = catchAsync(async (req, res) => {
   res.json({
     success: true,
@@ -87,8 +104,10 @@ export const me = catchAsync(async (req, res) => {
   });
 });
 
+/* -------------------- FORGOT PASSWORD -------------------- */
 export const forgotPassword = catchAsync(async (req, res) => {
   const { email } = req.body;
+
   if (!email) {
     throw new ApiError(400, "Email is required.");
   }
@@ -96,6 +115,39 @@ export const forgotPassword = catchAsync(async (req, res) => {
   res.json({
     success: true,
     message:
-      "If an account exists for that email, a password reset flow can be triggered from here.",
+      "If an account exists for that email, a reset link can be sent.",
+  });
+});
+
+/* -------------------- ✅ FIXED: CHECK EMAIL -------------------- */
+export const checkEmail = catchAsync(async (req, res) => {
+  const { email, purpose } = req.body;
+
+  if (!email) {
+    throw new ApiError(400, "Email is required.");
+  }
+
+  const existingUser = await User.findOne({
+    email: email.toLowerCase().trim(),
+  });
+
+  // If purpose = register → user should NOT exist
+  // If purpose = login → user SHOULD exist
+  let message = "Email checked successfully.";
+
+  if (purpose === "register" && existingUser) {
+    throw new ApiError(409, "An account already exists with this email.");
+  }
+
+  if (purpose === "login" && !existingUser) {
+    throw new ApiError(404, "No account found with this email.");
+  }
+
+  res.json({
+    success: true,
+    data: {
+      exists: !!existingUser,
+    },
+    message,
   });
 });
