@@ -282,6 +282,27 @@ export async function apiUpdateSettings(
   return data;
 }
 
+export {
+  apiRegister,
+  apiLogin,
+  apiGoogleLogin,
+  apiLogout,
+  apiCheckEmail,
+  apiVerifyEmail,
+  apiResendOtp,
+  apiForgotPassword,
+  apiGetMe,
+  apiGetDashboardSummary,
+  apiListThoughts,
+  apiCreateThought,
+  apiAnalyzeThought,
+  apiUpdateThought,
+  apiDeleteThought,
+  apiDeleteAllThoughts,
+  apiUpdateProfile,
+  apiUpdateSettings,
+};
+
 /* =========================================
    EXPORT CLIENT
 ========================================= */
