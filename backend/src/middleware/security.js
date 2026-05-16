@@ -10,6 +10,18 @@ function normalize(origin = "") {
   return origin.replace(/\/$/, "");
 }
 
+function matchesAllowedOrigin(requestOrigin, allowedOrigin) {
+  if (allowedOrigin.includes("*")) {
+    const pattern = allowedOrigin
+      .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+      .replace(/\*/g, ".*");
+
+    return new RegExp(`^${pattern}$`).test(requestOrigin);
+  }
+
+  return allowedOrigin === requestOrigin;
+}
+
 /* -----------------------------
    CORS CONFIGURATION
 ------------------------------*/
@@ -25,7 +37,14 @@ export function configureCors() {
 
       const requestOrigin = normalize(origin);
 
-      if (allowedOrigins.includes(requestOrigin)) {
+      if (
+        allowedOrigins.some((allowedOrigin) =>
+          matchesAllowedOrigin(
+            requestOrigin,
+            allowedOrigin
+          )
+        )
+      ) {
         return callback(null, true);
       }
 
