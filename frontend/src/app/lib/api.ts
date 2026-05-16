@@ -95,16 +95,30 @@ export async function apiLogin(
   return data;
 }
 
-/* ✅ GOOGLE LOGIN */
+/* =========================================
+   GOOGLE LOGIN
+========================================= */
 
 export async function apiGoogleLogin(
-  token: string
+  credential: string
 ) {
   const { data } = await apiClient.post(
     "/auth/google",
     {
-      token,
+      credential,
     }
+  );
+
+  return data;
+}
+
+/* =========================================
+   LOGOUT
+========================================= */
+
+export async function apiLogout() {
+  const { data } = await apiClient.post(
+    "/auth/logout"
   );
 
   return data;
