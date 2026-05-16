@@ -11,9 +11,10 @@ if (!API_BASE_URL) {
   );
 }
 
-/* --------------------------------
+/* =========================================
    AXIOS CLIENT
----------------------------------*/
+========================================= */
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -22,9 +23,10 @@ const apiClient = axios.create({
   timeout: 30000,
 });
 
-/* --------------------------------
+/* =========================================
    ATTACH JWT TOKEN
----------------------------------*/
+========================================= */
+
 apiClient.interceptors.request.use(
   (config) => {
     const token =
@@ -38,9 +40,10 @@ apiClient.interceptors.request.use(
   }
 );
 
-/* --------------------------------
+/* =========================================
    GLOBAL ERROR HANDLER
----------------------------------*/
+========================================= */
+
 apiClient.interceptors.response.use(
   (response) => response,
 
@@ -164,12 +167,53 @@ export async function apiGetDashboardSummary() {
    THOUGHT APIs
 ========================================= */
 
+export async function apiListThoughts() {
+  const { data } = await apiClient.get(
+    "/thoughts"
+  );
+
+  return data;
+}
+
+export async function apiCreateThought(
+  payload: any
+) {
+  const { data } = await apiClient.post(
+    "/thoughts",
+    payload
+  );
+
+  return data;
+}
+
 export async function apiAnalyzeThought(
   payload: any
 ) {
   const { data } = await apiClient.post(
     "/thoughts/analyze",
     payload
+  );
+
+  return data;
+}
+
+export async function apiUpdateThought(
+  id: string,
+  payload: any
+) {
+  const { data } = await apiClient.put(
+    `/thoughts/${id}`,
+    payload
+  );
+
+  return data;
+}
+
+export async function apiDeleteThought(
+  id: string
+) {
+  const { data } = await apiClient.delete(
+    `/thoughts/${id}`
   );
 
   return data;
