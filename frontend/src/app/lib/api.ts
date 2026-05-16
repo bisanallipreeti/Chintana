@@ -172,6 +172,36 @@ export async function apiForgotPassword(
   return data;
 }
 
+export async function apiResetPassword(
+  payload: any
+) {
+  const { data } = await apiClient.post(
+    "/auth/reset-password",
+    payload
+  );
+
+  return data;
+}
+
+export async function apiChangePassword(
+  payload: any
+) {
+  const { data } = await apiClient.post(
+    "/auth/change-password",
+    payload
+  );
+
+  return data;
+}
+
+export async function apiDeleteAccount() {
+  const { data } = await apiClient.delete(
+    "/auth/account"
+  );
+
+  return data;
+}
+
 export async function apiGetMe() {
   const { data } = await apiClient.get(
     "/auth/me"
@@ -256,6 +286,45 @@ export async function apiDeleteAllThoughts() {
   return data;
 }
 
+export async function apiUploadFile(
+  file: File,
+  expectedType: "image" | "video",
+  onProgress?: (percent: number) => void
+) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("expectedType", expectedType);
+
+  const { data } = await apiClient.post(
+    "/upload",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (event) => {
+        if (!onProgress || !event.total) return;
+        onProgress(
+          Math.round((event.loaded * 100) / event.total)
+        );
+      },
+    }
+  );
+
+  return data;
+}
+
+export async function apiExportThoughtsPdf() {
+  const { data } = await apiClient.get(
+    "/exports/thoughts/pdf",
+    {
+      responseType: "blob",
+    }
+  );
+
+  return data as Blob;
+}
+
 /* =========================================
    PROFILE APIs
 ========================================= */
@@ -281,27 +350,6 @@ export async function apiUpdateSettings(
 
   return data;
 }
-
-export {
-  apiRegister,
-  apiLogin,
-  apiGoogleLogin,
-  apiLogout,
-  apiCheckEmail,
-  apiVerifyEmail,
-  apiResendOtp,
-  apiForgotPassword,
-  apiGetMe,
-  apiGetDashboardSummary,
-  apiListThoughts,
-  apiCreateThought,
-  apiAnalyzeThought,
-  apiUpdateThought,
-  apiDeleteThought,
-  apiDeleteAllThoughts,
-  apiUpdateProfile,
-  apiUpdateSettings,
-};
 
 /* =========================================
    EXPORT CLIENT
