@@ -95,6 +95,21 @@ export async function apiLogin(
   return data;
 }
 
+/* ✅ GOOGLE LOGIN ADDED */
+
+export async function apiGoogleLogin(
+  token: string
+) {
+  const { data } = await apiClient.post(
+    "/auth/google",
+    {
+      token,
+    }
+  );
+
+  return data;
+}
+
 export async function apiCheckEmail(
   email: string,
   purpose: "login" | "register"
