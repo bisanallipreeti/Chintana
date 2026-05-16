@@ -95,7 +95,7 @@ export async function apiLogin(
   return data;
 }
 
-/* ✅ GOOGLE LOGIN ADDED */
+/* ✅ GOOGLE LOGIN */
 
 export async function apiGoogleLogin(
   token: string
